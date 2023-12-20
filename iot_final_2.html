@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>伐木偵測系統</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+    
+    <!-- JQuery 的 CDN 連結 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Socket.IO 的 CDN 連結 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"
+        integrity="sha512-WL6WGKMPBiM9PnHRYIn5YEtq0Z8XP4fkVb4qy7PP4vhmYQErJ/dySyXuFIMDf1eEYCXCrQrMJfkNwKc9gsjTjA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+<style>
+	@import url('//fonts.googleapis.com/earlyaccess/notosanstc.css');
+	:root{ 
+		background-color: black;
+		/* background: linear-gradient(90deg, rgb(234, 138, 103) 0%, rgb(240, 7, 232) 100%); */
+	}
+
+
+	body {
+		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		margin: 0;
+		padding: 0;
+		/* display: flex; */
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
+		background-color: black;
+	}
+
+	#header {
+		/* background-color: #fff; */
+		/* padding: 20px; */
+		border-radius: 8px;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		text-align: center;
+		align-items: center;
+	}
+
+
+	.logging-container {
+		background-color: #fff;
+		padding: 20px;
+		border-radius: 8px;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		text-align: center;
+		align-items: center;
+	}
+
+	h1 {
+		margin-bottom: 1rem;
+		font-size: 4rem;
+		margin-bottom: 1rem;
+		justify-content: center;
+		align-items: center;
+		color: #1c1d1e;
+	}
+
+	.info-container {
+		/* display: flex; */
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-top: 20px;
+	}
+
+	#log {
+		width: 60%;
+		text-align: left;
+		max-height: 200px;
+		overflow-y: auto;
+	}
+
+	#land-info {
+		/* width: 35%; */
+		text-align: left;
+	}
+
+	.land-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		grid-gap: 30px;
+	}
+
+	.land-block {
+		padding: 1rem;
+		width: 200px;
+		height: 100px;
+		background-color: #2ecc71; 
+		border: 1px solid #27ae60;
+		border-radius: 8px;
+		transition: background-color 0.3s ease; /* 添加顏色過渡效果 */
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.land-block:hover {
+		background-color: #80cca6; /* 滑鼠移過去時的顏色，可以根據需求調整 */
+	}
+
+	.land-info-tooltip {
+		position: absolute;
+		top: 25%;
+		left: 25%;
+		transform: translate(-50%, -50%);
+		color: #fff;
+		/* padding: 8px;
+		border-radius: 4px;
+		display: none; */
+	}
+
+	.land-text {
+		color: #fff;
+		font-weight: bold;
+		font-size: 2.5rem;
+	}
+
+	#chat_content {
+		font-size: 3rem;
+		color: wheat
+	}
+  </style>
+
+<script>	
+	
+setInterval(function() {
+var settings = {
+  "url": "https://asia-tellus-tutk-stg.kalay.us/tellus/api/v1/command",
+  "method": "POST",
+  "timeout": 0,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "data": JSON.stringify({
+    "cmd": {
+      "func": "get/uart"
+    },
+    "credential": "tOdEWPLw+H0WlYX4l1XWxbMuix6AAqgPe/XL8k4Cxfhqu6sSgUNU6CBkt+Iu+Ab37hW3l/+KkKm0FE+L/dWgcsRmfnhtXshGUg7vp5wJatanq+nY9PvjQbLn2A2mAOKI4TQehJcc3suGE2/0hS1mr4Atgf7bETztxwYmlCH41R1hvNhZ8XjZnD9XRVK6CXFDhOgO8aPs40HgGmnRma4Fdg==",// The credential data can be obtained from the IoT_Enable DK after connecting to the network using the ATT2 network connection command
+	 
+    "udid": "01D4OISSN57RVKIJLJO0X32PNW2PFZ676H6XY3VS",// udid data can be obtained from IoT_Enable DK using the ATT? command
+    "apiKey": "pFY091RlzubaW8NC1IOqPG8q5ZC7FlQ7otCCQq3pcKjXT0IIhBvv3HYqadscZH0srQ4klXI6zu2pFQa",
+    "realm": "soclestg"
+  }),
+};
+
+var response;
+$.ajax(settings).done(function (response) {
+  console.log(response);
+
+	var base64String = response.result;
+
+	if (isValidBase64(base64String)) {
+	  var decodedText = atob(base64String);
+	  console.log(decodedText);
+	} else {
+	  console.log("Invalid Base64 string.");
+	}	
+
+	var jsonObject = JSON.parse(decodedText);
+	
+	console.log("jsonObject:"+jsonObject.content.value);
+	
+	var base64String = jsonObject.content.value;
+	var hexString = base64ToHex(base64String);
+	console.log("hexString:"+hexString);
+	
+	var substring_1 = hexString.substring(0, 2);
+	var substring_2 = hexString.substring(2, 4);
+	// var substring_3 = hexString.substring(4, 6);
+	
+	console.log("substring_1:"+substring_1);
+	console.log("substring_2:"+substring_2);
+	// console.log("substring_3:"+substring_3);
+	
+	var decimalNumber_1 = parseInt(substring_1, 16);
+	var decimalNumber_2 = parseInt(substring_2, 16);
+	// var decimalNumber_3 = parseInt(substring_3, 16);
+	
+	console.log("decimalNumber_1:"+decimalNumber_1);
+	console.log("decimalNumber_2:"+decimalNumber_2);
+	// console.log("decimalNumber_3:"+decimalNumber_3);
+
+	// Convert Base64 to decimal
+	var decodedData = atob(jsonObject.content.value);
+	var decimalValue = 0;
+
+	for (var i = 0; i < decodedData.length; i++) {
+	  decimalValue = decimalValue * 256 + decodedData.charCodeAt(i);
+	}
+	
+	// Output decimal to HTML id tag
+	var element = document.getElementById("chat_content");
+	// element.textContent = " [Value 1 : " +  decimalNumber_1 + "]    [Value 2 : " +  decimalNumber_2 + "]   [Value 3 : " +  decimalNumber_3 + "]";
+	element.textContent = decimalNumber_1;
+  
+  // if (decimalNumber_1 === '2')
+  //   document.getElementById('cut_tree').innerText = randomLetter + '區域偵測砍樹!!!!';
+  // else
+  //   document.getElementById('cut_tree').innerText = '目前無砍樹情形';
+   
+  // const randomIndex = Math.floor(Math.random() * 4) + 1;
+  var forest1Element = document.getElementById("forest1");
+  var forest2Element = document.getElementById("forest2");
+  var forest3Element = document.getElementById("forest3");
+  var forest4Element = document.getElementById("forest4");
+
+  switch (decimalNumber_1){
+    case (0):
+      document.getElementById('cut_tree').innerText = '目前無砍樹情形';
+      forest1Element.style.backgroundColor = "#2ecc71";
+      forest2Element.style.backgroundColor = "#2ecc71";
+      forest3Element.style.backgroundColor = "#2ecc71";
+      forest4Element.style.backgroundColor = "#2ecc71";
+      break;
+    case (1):
+      document.getElementById('cut_tree').innerText = '區域偵測砍樹!!!!';
+      
+      switch(decimalNumber_2){
+        case(1):
+          document.getElementById('cut_tree').innerText = 'A 區域偵測砍樹!!!!';
+          forest1Element.style.backgroundColor = "#ff0000";
+          break;
+        case(2):
+          document.getElementById('cut_tree').innerText = 'B 區域偵測砍樹!!!!';
+          forest2Element.style.backgroundColor = "#ff0000";
+          break;
+        case(3):
+          document.getElementById('cut_tree').innerText = 'C 區域偵測砍樹!!!!';
+          forest3Element.style.backgroundColor = "#ff0000";
+          break;
+        case(4):
+          document.getElementById('cut_tree').innerText = 'D 區域偵測砍樹!!!!';
+          forest4Element.style.backgroundColor = "#ff0000";
+          break;
+        default:
+          document.getElementById('cut_tree').innerText = '區域偵測砍樹!!!!';
+          break;
+      }
+      break;
+    default:
+      document.getElementById('cut_tree').innerText = '目前無砍樹情形';
+      forest1Element.style.backgroundColor = "#2ecc71";
+      forest2Element.style.backgroundColor = "#2ecc71";
+      forest3Element.style.backgroundColor = "#2ecc71";
+      forest4Element.style.backgroundColor = "#2ecc71";
+      break;
+  }
+  
+
+
+	function isValidBase64(str) {
+	  try {
+		return btoa(atob(str)) === str;
+	  } catch (err) {
+		return false;
+	  }
+	}
+});
+}, 2000); //Do not set below than 1000
+	
+	
+function base64ToHex(base64) {
+  // Decode the Base64 string
+  var decodedString = atob(base64);
+
+  // Convert the decoded string to HEX
+  var hexString = '';
+  for (var i = 0; i < decodedString.length; i++) {
+    var hex = decodedString.charCodeAt(i).toString(16);
+    hexString += (hex.length === 2 ? hex : '0' + hex);
+  }
+  return hexString;
+}	
+
+</script>
+</head>
+
+
+<body>
+
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function () {
+            // Socket.IO Start connect
+            // var socket = io.connect();
+
+            // // 定義全域變數存儲抽籤結果
+            // var randomLetter = '';
+
+            // // 定義定時器，每10秒執行一次抽籤
+            // setInterval(function () {
+            //     randomLetter = getRandomLetter();
+            //     // 在這裡更新顯示抽籤結果的地方
+            //     //updateCutTreeText();
+            // }, 10000);
+
+            // function getRandomLetter() {
+            //   const letters = ['A', 'B', 'C', 'D'];
+            //   const randomIndex = Math.floor(Math.random() * letters.length);
+            //   return letters[randomIndex];
+            // }
+
+            // 查看林地資訊
+            var myBlock1 = document.getElementById('forest1');
+            var myBlock2 = document.getElementById('forest2');
+            var myBlock3 = document.getElementById('forest3');
+            var myBlock4 = document.getElementById('forest4');            
+            var myHeading = document.getElementById('forest-info');
+            var intro = document.getElementById('forest-intro');            
+
+            // block1
+            myBlock1.addEventListener('mouseover', function() {
+              
+              myHeading.textContent = '50公頃的林地中種植柳杉約900株，平均樹高23 m。林地植株種植較密，林下植物以蕨類為主。林木多用來製作家具或其他文藝作品等。';
+              intro.textContent='A林地-柳杉林'
+            });
+
+            // 添加鼠标离开事件监听器，如果需要在离开时还原文本
+            myBlock1.addEventListener('mouseout', function() {
+              
+              myHeading.textContent = '將滑鼠游標移至各林地上方已在此查詢林地資訊';
+              intro.textContent='林地簡介'
+            });
+
+            // block2
+            myBlock2.addEventListener('mouseover', function() {
+              myHeading.textContent = '5公頃的林地中種植台灣杉78株，平均樹高35.2 m。台灣杉為台灣特有種針葉樹，以七彩的木頭為名，林木多用來製作桌椅。';
+              intro.textContent='B林地-台灣杉林'
+            });
+
+            myBlock2.addEventListener('mouseout', function() {
+              myHeading.textContent = '將滑鼠游標移至各林地上方已在此查詢林地資訊';
+              intro.textContent='林地簡介'
+            });
+
+            // block3
+            myBlock3.addEventListener('mouseover', function() {
+              myHeading.textContent = '34公頃的林地中育有紅檜550株，平均樹高32.8 m，多數有附生蘭、山蘇共生，林下植物優勢植物為蕨類、山香圓等。每15年進行一次疏伐，砍伐下來之林木多為家具、裝飾品或提煉精油等用途。';
+              intro.textContent='C林地-紅檜林'
+            });
+
+            myBlock3.addEventListener('mouseout', function() {
+              myHeading.textContent = '將滑鼠游標移至各林地上方已在此查詢林地資訊';
+              intro.textContent='林地簡介'
+            });
+
+            // block4
+            myBlock4.addEventListener('mouseover', function() {
+              myHeading.textContent = '共有343株扁柏，平均樹高26.7 m，林下植物以蕨類、馬藍、殼斗科為主。林地每20年進行一次疏伐，砍伐下來之林木多為家具用途。';
+              intro.textContent='D林地-扁柏林'
+            });
+
+            myBlock4.addEventListener('mouseout', function() {
+              myHeading.textContent = '將滑鼠游標移至各林地上方已在此查詢林地資訊';
+              intro.textContent='林地簡介'
+            });
+
+
+        });
+
+    </script>
+
+    <section class="is-background-contain is-background-no-repeat">
+        <nav class="navbar is-fixed-top is-black is-transparent py-3" role="navigation" aria-label="main navigation">
+          <div class="container">
+            <div class="navbar-brand">
+              <a class="navbar-item">
+                <span class="icon is-large">
+                  <i class="fa-solid fa-tree"></i>
+                </span>
+                <h3 class="title is-size-2 has-text-white">伐木偵測系統</h3>
+              </a>
+
+              <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
+                data-target="navbarBasicExample">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+              </a>
+            </div>
+            <div id="navbarBasicExample" class="navbar-menu has-background-black">
+              <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+                <a id="changenavbarcolor" class="navbar-item has-background-black has-text-white" href="#home-section">首頁</a>
+                <a id="changenavbarcolor" class="navbar-item has-background-black has-text-white" href="#pose-section">林地監測</a>
+                <!-- <a id="changenavbarcolor" class="navbar-item has-background-success" href="#pose-section">坐姿檢測</a>
+                <a id="changenavbarcolor" class="navbar-item has-background-success" href="#analysis-section">健康分析</a> -->
+              </div>
+              <div class="navbar-end">
+                <div class="navbar-item">
+                  <a class="button is-primary is-outlined">Log in</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+    </section>
+
+  <!-- 首頁 -->
+  <section id="home-section" class="section">
+    <div class="container mx-auto">
+      <!-- <br><br> -->
+      <div class="is-max-w-lg mx-auto has-text-centered mb-6">
+        <div class="is-relative is-max-w-3xl mx-auto mb-6">
+          <img src="https://i.imgur.com/Oj4e3T8.jpg">
+          <div style="position:absolute; top: 10%; left: 9%; width: 82%; height: 90%;">
+            <!-- <img style="object-fit: contain; width: 100%; height: 100%"
+              src="https://shuffle.dev/metis-assets/elements/app-mockup.png"> -->
+            <h3 style="object-fit: contain">監測林木的健康，防治山老鼠!!!</h3>
+          </div>
+        </div>
+      </div>
+  </section>
+
+  <!-- 坐姿檢測 -->
+  <section id="pose-section has-background-black" class="section">
+    <div class="container is-max-widescreen">
+      <br><br>
+      <h2 class="heading is-size-3 is-spaced has-text-grey-light">林分示意圖</h2>
+      <p class="subtitle">此林地共有四片林分，移動滑鼠游標至各林地可查詢各林分之資訊。</p>
+
+      <div class="columns py-3 is-centered is-vcentered">
+        <div class="column is-6 pr-6">
+          <div class="p-6" style="position: relative;">
+            <div>
+              <div id="log"></div>
+              <div id="land-info" class="land-grid">
+                  <div id = "forest1" class="land-block" data-info="林地 1">
+                    <span class="land-text">A</span>
+                  </div>
+                  <div id = "forest2" class="land-block" data-info="林地 2">
+                    <span class="land-text">B</span>
+                  </div>
+                  <div id = "forest3" class="land-block" data-info="林地 3">
+                    <span class="land-text">C</span>
+                  </div>
+                  <div id = "forest4" class="land-block" data-info="林地 4">
+                    <span class="land-text">D</span>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-6">
+          <div class="mb-6">
+            <span class="tag is-link is-light is-large">震動感測器數值</span>
+            <h2 id="chat_content">0</h2>
+          </div>
+          <div class="mb-6">
+            <h4 class="tag is-info is-rounded">是否有樹被砍</h4>
+            
+            <h2 id='cut_tree' class="mt-4 title is-size-3 has-text-danger">等待連線中...</h2>
+          </div>
+          <br>
+          <div class="is-flex mb-6">
+            <div class="mr-4 has-text-primary">
+              <svg class="image is-32x32" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div class='word'>
+              <h3 id ="forest-intro" class="title is-size-5 is-spaced mb-3 has-text-grey-light">林地簡介</h3>
+              <p class="subtitle has-text-grey-light" id="forest-info">
+                 將滑鼠游標移至各林地上方已在此查詢林地資訊</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+    
+  <footer class="footer has-background-black">
+    <div class="content has-text-centered">
+      <p>
+        © 2023 NTU IOT Final 羅恩至 & 徐華佑
+      </p>
+    </div>
+  </footer>
+    
+</body>
+</html>
